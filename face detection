@@ -1,0 +1,61 @@
+import cv2
+import numpy as np
+import os
+from sklearn.neighbors import KNeighborsClassifier
+
+# Load dataset
+data_dir = "face_dataset"  # Folder with subfolders of person images
+categories = os.listdir(data_dir)
+
+images = []
+labels = []
+
+label_dict = {}  # Map names to label numbers
+for idx, name in enumerate(categories):
+    label_dict[idx] = name
+    folder_path = os.path.join(data_dir, name)
+    for filename in os.listdir(folder_path):
+        img_path = os.path.join(folder_path, filename)
+        img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        img = cv2.resize(img, (100, 100))
+        images.append(img.flatten())
+        labels.append(idx)
+
+# Convert to numpy arrays
+X = np.array(images)
+y = np.array(labels)
+
+# Train model (KNN used here)
+model = KNeighborsClassifier(n_neighbors=5)
+model.fit(X, y)
+
+# Load Haar Cascade
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+# Open webcam
+webcam = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = webcam.read()
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+    for (x, y, w, h) in faces:
+        face = gray[y:y+h, x:x+w]
+        face_resized = cv2.resize(face, (100, 100)).flatten().reshape(1, -1)
+
+        prediction = model.predict(face_resized)[0]
+        name = label_dict.get(prediction, "Unknown Person")
+
+        # Draw box and label
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(frame, name, (x, y - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+    cv2.imshow("OpenCV", frame)
+
+    if cv2.waitKey(1) & 0xFF == 27:  # Press ESC to exit
+        break
+
+webcam.release()
+cv2.destroyAllWindows()
