@@ -42,9 +42,4 @@ Install required packages:
 pip install opencv-python scikit-learn numpy
 
 
-## ACKNOWLEDGMENT
-
-This project was guided by Mr. T. Muthuvel Ramesh as part of my internship at NoviTech. His mentorship played a key role in understanding and applying AI concepts in a real-world project.
-
-
 
